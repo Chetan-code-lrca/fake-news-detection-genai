@@ -199,10 +199,6 @@ git push origin feature/your-feature
 
 Open a pull request on GitHub when ready.
 
-## License
-
-No license file is currently listed in the repository root. If this project is intended for public reuse, add an explicit `LICENSE` file before presenting it as an open-source project.
-
 ## Status
 
 This repository is currently best understood as an **ML experimentation/training repository**. The dataset, trained artifacts, and initial notebook are present; a documented end-to-end application/inference service is not currently part of the checked-in project structure. fileciteturn27file0
