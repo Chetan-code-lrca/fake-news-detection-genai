@@ -11,7 +11,7 @@ The current repository contains:
 - Its TF-IDF vectorizer in `models/tfidf_vectorizer.pkl`
 - A Jupyter notebook for data loading and exploration in `notebooks/01_data_loading.ipynb`
 
-The checked-in repository does **not currently contain a web application, `requirements.txt`, `package.json`, or a Python inference script**, so this README documents the reproducible notebook/model workflow without inventing an application startup command. fileciteturn26file0 fileciteturn27file0
+The checked-in repository does **not currently contain a web application, `requirements.txt`, `package.json`, or a Python inference script**, so this README documents the reproducible notebook/model workflow without inventing an application startup command.
 
 ## Repository Structure
 
@@ -40,7 +40,7 @@ For the notebook/model workflow, use:
 - pandas
 - NumPy
 - scikit-learn
-- matplotlib (if required by later notebook cells)
+- matplotlib, if required by later notebook cells
 
 Because this repository currently has no dependency lock file, create an isolated virtual environment before installing packages.
 
@@ -107,13 +107,11 @@ The repository currently contains three raw CSV datasets:
 
 ```text
 data/raw/Fake.csv
- data/raw/True.csv
- data/raw/IFND.csv
+data/raw/True.csv
+data/raw/IFND.csv
 ```
 
-The first two files are large (roughly 60 MB and 51 MB respectively), while `IFND.csv` is roughly 11 MB. fileciteturn27file0
-
-If GitHub cloning or storage becomes inconvenient because of dataset size, consider moving large datasets to Git LFS or an external dataset-storage solution in a future revision.
+The first two files are large, while `IFND.csv` is smaller. If GitHub cloning or storage becomes inconvenient because of dataset size, consider moving large datasets to Git LFS or an external dataset-storage solution in a future revision.
 
 ## 5. Included Trained Model
 
@@ -201,4 +199,4 @@ Open a pull request on GitHub when ready.
 
 ## Status
 
-This repository is currently best understood as an **ML experimentation/training repository**. The dataset, trained artifacts, and initial notebook are present; a documented end-to-end application/inference service is not currently part of the checked-in project structure. fileciteturn27file0
+This repository is currently best understood as an **ML experimentation/training repository**. The dataset, trained artifacts, and initial notebook are present; a documented end-to-end application/inference service is not currently part of the checked-in project structure.
