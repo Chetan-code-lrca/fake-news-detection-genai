@@ -1,19 +1,17 @@
 # Fake News Detection using AI & GenAI
 
-A machine-learning project for experimenting with **fake-news classification, text preprocessing, TF-IDF features, and trained classification models**.
+This repository contains a machine-learning workflow for classifying news articles as fake or real. The current project focuses on dataset loading, text preprocessing, TF-IDF features, and a trained scikit-learn classifier.
 
-## What is in this repository?
+## What is included
 
-The current repository contains:
+- Raw datasets in `data/raw/`
+- A trained classifier in `models/fake_news_model.pkl`
+- The fitted TF-IDF vectorizer in `models/tfidf_vectorizer.pkl`
+- A Jupyter notebook for loading and exploring the data in `notebooks/01_data_loading.ipynb`
 
-- Raw news datasets in `data/raw/`
-- A trained fake-news classifier in `models/fake_news_model.pkl`
-- Its TF-IDF vectorizer in `models/tfidf_vectorizer.pkl`
-- A Jupyter notebook for data loading and exploration in `notebooks/01_data_loading.ipynb`
+There is currently no web application or standalone inference script in the repository. The main workflow is the notebook and the included model artifacts.
 
-The checked-in repository does **not currently contain a web application, `requirements.txt`, `package.json`, or a Python inference script**, so this README documents the reproducible notebook/model workflow without inventing an application startup command.
-
-## Repository Structure
+## Project structure
 
 ```text
 fake-news-detection-genai/
@@ -32,26 +30,26 @@ fake-news-detection-genai/
 
 ## Requirements
 
-For the notebook/model workflow, use:
+Use Python 3.10 or newer with:
 
-- Python 3.10+
-- Git
-- Jupyter Notebook or JupyterLab
 - pandas
 - NumPy
 - scikit-learn
-- matplotlib, if required by later notebook cells
+- matplotlib
+- Jupyter Notebook or JupyterLab
 
-Because this repository currently has no dependency lock file, create an isolated virtual environment before installing packages.
+The repository does not include a dependency lock file, so using a virtual environment keeps the setup isolated from other Python projects.
 
-## 1. Clone the Repository
+## Run locally
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/Chetan-code-lrca/fake-news-detection-genai.git
 cd fake-news-detection-genai
 ```
 
-## 2. Create a Python Environment
+Create and activate a virtual environment.
 
 ### Linux / macOS
 
@@ -67,21 +65,14 @@ py -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-Upgrade pip:
+Install the dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-```
-
-Install the core packages:
-
-```bash
 python -m pip install pandas numpy scikit-learn matplotlib jupyter
 ```
 
-## 3. Run the Notebook
-
-Start Jupyter from the repository root:
+Start Jupyter:
 
 ```bash
 jupyter notebook
@@ -93,17 +84,11 @@ or:
 jupyter lab
 ```
 
-Then open:
+Open `notebooks/01_data_loading.ipynb` and run the cells in order.
 
-```text
-notebooks/01_data_loading.ipynb
-```
+## Data
 
-Run the notebook cells in order.
-
-## 4. Working with the Included Datasets
-
-The repository currently contains three raw CSV datasets:
+The repository contains three CSV files under `data/raw/`:
 
 ```text
 data/raw/Fake.csv
@@ -111,36 +96,40 @@ data/raw/True.csv
 data/raw/IFND.csv
 ```
 
-The first two files are large, while `IFND.csv` is smaller. If GitHub cloning or storage becomes inconvenient because of dataset size, consider moving large datasets to Git LFS or an external dataset-storage solution in a future revision.
+The notebook currently combines `Fake.csv` and `True.csv`, shuffles the combined data with `random_state=42`, and assigns the labels:
 
-## 5. Included Trained Model
+```text
+Fake.csv → 1
+True.csv → 0
+```
 
-Two serialized artifacts are already checked into the repository:
+The notebook reads both datasets with the columns `title`, `text`, `subject`, and `date`.
+
+## Model artifacts
+
+The trained model and fitted vectorizer are stored here:
 
 ```text
 models/fake_news_model.pkl
 models/tfidf_vectorizer.pkl
 ```
 
-The intended inference flow is:
+The expected prediction flow is:
 
 ```text
-News article / text
-        ↓
-Text preprocessing
-        ↓
+News text
+   ↓
 TF-IDF vectorizer
-        ↓
+   ↓
 Trained classifier
-        ↓
-Fake / real prediction
+   ↓
+0 = real
+1 = fake
 ```
 
-When loading the model, use the **same preprocessing and vectorizer assumptions used during training**. Do not independently fit a new TF-IDF vectorizer on test text, because that changes the feature representation expected by the trained model.
+Use the included vectorizer when preparing text for the saved classifier. Do not fit a new vectorizer on prediction text, because the resulting feature space would not match the model used during training.
 
-## 6. Example Model Loading
-
-Once scikit-learn is installed, the serialized artifacts can be loaded with Python/pickle-compatible tooling. For example:
+### Load the saved artifacts
 
 ```python
 import pickle
@@ -152,51 +141,31 @@ with open("models/tfidf_vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 ```
 
-For an actual prediction, transform input text with the **included** vectorizer before passing it to the model:
+For a simple prediction:
 
 ```python
 text = "Example news article text"
 features = vectorizer.transform([text])
-prediction = model.predict(features)
-print(prediction)
+prediction = model.predict(features)[0]
+
+print("Fake" if prediction == 1 else "Real")
 ```
 
-The exact label meaning (`fake`, `real`, or another encoding) should be verified from the training notebook/model rather than assumed.
-
-## 7. Reproducing the Project
-
-A clean reproduction workflow is:
+## Reproducing the workflow
 
 1. Clone the repository.
-2. Create a Python virtual environment.
-3. Install the required Python packages.
+2. Create and activate the virtual environment.
+3. Install the Python dependencies.
 4. Open `notebooks/01_data_loading.ipynb`.
-5. Inspect the dataset columns and preprocessing steps.
-6. Reproduce the training/evaluation workflow as additional notebooks or scripts are added.
-7. Save updated model artifacts only when their training process is documented.
+5. Run the notebook from the repository's `notebooks/` directory so the relative dataset paths resolve correctly.
+6. Follow the notebook's preprocessing and dataset preparation steps before training a new model.
 
-## Important Limitation
+## Limitations
 
-A fake-news classifier should be treated as a **research/educational classification system**, not as an authoritative fact-checker. Model predictions can be wrong because of dataset bias, distribution changes, misleading writing styles, incomplete context, or adversarial content.
+This is a machine-learning classification project, not a fact-checking service. A prediction can be wrong because of dataset bias, changes in news sources and writing styles, missing context, or content that differs from the training data.
 
-A classification result should not be treated as proof that a real-world news claim is true or false.
+A `fake` prediction should not be treated as proof that a real-world claim is false, and a `real` prediction should not be treated as proof that a claim is true.
 
-## Contributing
+## License
 
-```bash
-git checkout -b feature/your-feature
-```
-
-Make your changes, test the notebook/workflow, then:
-
-```bash
-git add .
-git commit -m "Describe your change"
-git push origin feature/your-feature
-```
-
-Open a pull request on GitHub when ready.
-
-## Status
-
-This repository is currently best understood as an **ML experimentation/training repository**. The dataset, trained artifacts, and initial notebook are present; a documented end-to-end application/inference service is not currently part of the checked-in project structure.
+No license file is included in the repository.
