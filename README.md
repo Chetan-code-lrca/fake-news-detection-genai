@@ -165,7 +165,3 @@ print("Fake" if prediction == 1 else "Real")
 This is a machine-learning classification project, not a fact-checking service. A prediction can be wrong because of dataset bias, changes in news sources and writing styles, missing context, or content that differs from the training data.
 
 A `fake` prediction should not be treated as proof that a real-world claim is false, and a `real` prediction should not be treated as proof that a claim is true.
-
-## License
-
-No license file is included in the repository.
