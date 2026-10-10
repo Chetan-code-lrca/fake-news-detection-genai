@@ -41,7 +41,7 @@ def test_predict_news_maps_one_to_fake() -> None:
     assert predict_news("Example claim", FakeModel(label=1), FakeVectorizer()) == "Fake"
 
 
-@pytest.mark.parametrize("text", ["", "   ", "\\n\\t"])
+@pytest.mark.parametrize("text", ["", "   ", "\n\t"])
 def test_predict_news_rejects_empty_text(text: str) -> None:
     with pytest.raises(ValueError, match="must not be empty"):
         predict_news(text, FakeModel(), FakeVectorizer())
