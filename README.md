@@ -9,7 +9,7 @@ This repository contains a machine-learning workflow for classifying news articl
 - The fitted TF-IDF vectorizer in `models/tfidf_vectorizer.pkl`
 - A Jupyter notebook for loading and exploring the data in `notebooks/01_data_loading.ipynb`
 
-There is currently no web application or standalone inference script in the repository. The main workflow is the notebook and the included model artifacts.
+The repository also includes an offline command-line inference script and automated tests. The large CSV files are needed only when exploring or rebuilding the training dataset; a prediction uses the saved model and vectorizer.
 
 ## Project structure
 
@@ -65,11 +65,17 @@ py -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-Install the dependencies:
+Install the inference and test dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install pandas numpy scikit-learn matplotlib jupyter
+python -m pip install -r requirements.txt
+```
+
+To rerun the data-exploration notebook, install its additional packages too:
+
+```bash
+python -m pip install pandas numpy matplotlib jupyter
 ```
 
 Start Jupyter:
@@ -85,6 +91,24 @@ jupyter lab
 ```
 
 Open `notebooks/01_data_loading.ipynb` and run the cells in order.
+
+## Run inference offline
+
+After the Python dependencies are installed, classify an article with the saved local artifacts:
+
+```bash
+python predict.py 'The article text goes here.'
+```
+
+The script loads the model and matching TF-IDF vectorizer from the models directory relative to the script, so it also works when invoked from another working directory. For alternate trusted artifact paths, use the --model and --vectorizer options. It prints Real or Fake and does not access an external API.
+
+Run the automated checks with:
+
+```bash
+python -m pytest -q
+```
+
+**Interpretation:** the output is a model prediction, not independent verification of a claim. Do not treat it as proof that an article is true or false. Only load model artifacts you trust; joblib files are pickle-based and must not be loaded from untrusted sources.
 
 ## Data
 
@@ -132,13 +156,10 @@ Use the included vectorizer when preparing text for the saved classifier. Do not
 ### Load the saved artifacts
 
 ```python
-import pickle
+import joblib
 
-with open("models/fake_news_model.pkl", "rb") as f:
-    model = pickle.load(f)
-
-with open("models/tfidf_vectorizer.pkl", "rb") as f:
-    vectorizer = pickle.load(f)
+model = joblib.load("models/fake_news_model.pkl")
+vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
 ```
 
 For a simple prediction:
