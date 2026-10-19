@@ -33,8 +33,16 @@ def test_predict_news_maps_zero_to_real_and_passes_one_text() -> None:
     result = predict_news("  A sample article  ", model, vectorizer)
 
     assert result == "Real"
-    assert vectorizer.received == ["  A sample article  "]
-    assert model.received == ["  A sample article  "]
+    assert vectorizer.received == ["  a sample article  "]
+    assert model.received == ["  a sample article  "]
+
+
+def test_predict_news_uses_training_cleanup_for_punctuation_and_digits() -> None:
+    vectorizer = FakeVectorizer()
+
+    predict_news("State-of-the-art, 2026!", FakeModel(), vectorizer)
+
+    assert vectorizer.received == ["stateoftheart "]
 
 
 def test_predict_news_maps_one_to_fake() -> None:
