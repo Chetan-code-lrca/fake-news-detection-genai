@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -12,6 +13,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "models" / "fake_news_model.pkl"
 DEFAULT_VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.pkl"
 LABEL_NAMES = {0: "Real", 1: "Fake"}
+
+
+def clean_text(text: str) -> str:
+    """Match the lowercase and non-letter cleanup used during training."""
+    return re.sub(r"[^a-z\\s]", "", text.lower())
 
 
 def load_artifacts(
@@ -49,7 +55,7 @@ def predict_news(text: str, model: Any, vectorizer: Any) -> str:
     if not callable(getattr(vectorizer, "transform", None)):
         raise TypeError("vectorizer must provide a callable transform() method")
 
-    features = vectorizer.transform([text])
+    features = vectorizer.transform([clean_text(text)])
     predictions = model.predict(features)
     if len(predictions) != 1:
         raise ValueError("model must return exactly one prediction for one article")
