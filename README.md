@@ -15,6 +15,7 @@ The repository also includes an offline command-line inference script and automa
 
 ```text
 fake-news-detection-genai/
+├── .github/workflows/tests.yml
 ├── data/
 │   └── raw/
 │       ├── Fake.csv
@@ -25,6 +26,10 @@ fake-news-detection-genai/
 │   └── tfidf_vectorizer.pkl
 ├── notebooks/
 │   └── 01_data_loading.ipynb
+├── tests/
+│   └── test_predict.py
+├── predict.py
+├── requirements.txt
 └── README.md
 ```
 
@@ -165,8 +170,10 @@ vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
 For a simple prediction:
 
 ```python
+from predict import clean_text
+
 text = "Example news article text"
-features = vectorizer.transform([text])
+features = vectorizer.transform([clean_text(text)])
 prediction = model.predict(features)[0]
 
 print("Fake" if prediction == 1 else "Real")
