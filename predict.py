@@ -17,7 +17,7 @@ LABEL_NAMES = {0: "Real", 1: "Fake"}
 
 def clean_text(text: str) -> str:
     """Match the lowercase and non-letter cleanup used during training."""
-    return re.sub(r"[^a-z\\s]", "", text.lower())
+    return re.sub(r"[^a-z\s]", "", text.lower())
 
 
 def load_artifacts(
