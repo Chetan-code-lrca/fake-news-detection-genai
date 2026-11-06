@@ -47,7 +47,13 @@ def load_training_data(fake_csv: str | Path, true_csv: str | Path) -> tuple[list
     frame = pd.concat([fake, real], ignore_index=True)
     frame["clean_text"] = frame["text"].map(clean_text)
     frame = frame[frame["clean_text"].str.len() > 0]
-    frame = frame.drop_duplicates(subset=["clean_text", "label"]).reset_index(drop=True)
+
+    # Remove exact-text conflicts before splitting so the same article cannot
+    # appear in both classes and contaminate train/test evaluation.
+    label_counts = frame.groupby("clean_text")["label"].nunique()
+    conflicting_texts = set(label_counts[label_counts > 1].index)
+    frame = frame[~frame["clean_text"].isin(conflicting_texts)]
+    frame = frame.drop_duplicates(subset=["clean_text"]).reset_index(drop=True)
 
     if frame["label"].nunique() != 2:
         raise ValueError("Training requires both Fake.csv and True.csv classes with non-empty text.")
