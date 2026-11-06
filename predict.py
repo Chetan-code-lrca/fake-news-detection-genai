@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from typing import Any, Sequence
 
 import joblib
 
 from news_classifier import (
+    LABELS,
     MAX_PREDICTION_CHARS,
     load_artifacts as load_model_dir_artifacts,
     predict_text,
@@ -49,10 +51,33 @@ def load_artifacts(
     return model, vectorizer
 
 
+def _legacy_clean_text(text: str) -> str:
+    """Keep the preprocessing used by the repository's original saved artifacts."""
+    if not isinstance(text, str):
+        raise TypeError("news text must be a string")
+    return re.sub(r"[^a-z\s]", "", text.lower())
+
+
 def predict_news(text: str, model: Any, vectorizer: Any) -> str:
-    """Compatibility helper returning the dataset label only."""
-    label, _numeric_label = predict_text(text, model, vectorizer)
-    return label
+    """Predict with the legacy preprocessor for the original checked-in artifacts."""
+    if not isinstance(text, str):
+        raise TypeError("news text must be a string")
+    if not text.strip():
+        raise ValueError("news text must not be empty")
+    if len(text) > MAX_PREDICTION_CHARS:
+        raise ValueError(f"news text exceeds the {MAX_PREDICTION_CHARS:,}-character limit")
+    if not callable(getattr(model, "predict", None)):
+        raise TypeError("model must provide a callable predict() method")
+    if not callable(getattr(vectorizer, "transform", None)):
+        raise TypeError("vectorizer must provide a callable transform() method")
+
+    predictions = model.predict(vectorizer.transform([_legacy_clean_text(text)]))
+    if len(predictions) != 1:
+        raise ValueError("model must return exactly one prediction for one article")
+    label = int(predictions[0])
+    if label not in LABELS:
+        raise ValueError(f"model returned unsupported label {label!r}; expected 0 or 1")
+    return LABELS[label]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -91,7 +116,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.vectorizer,
             model_dir=args.model_dir,
         )
-        label, numeric_label = predict_text(text, model, vectorizer)
+        # Training writes this manifest with the new normalizer. Without it, use
+        # the legacy normalizer so the checked-in pre-trained artifacts remain valid.
+        is_legacy = args.model is not None or not (
+            args.model_dir / "training_metadata.json"
+        ).is_file()
+        if is_legacy:
+            label = predict_news(text, model, vectorizer)
+            numeric_label = next(key for key, value in LABELS.items() if value == label)
+        else:
+            label, numeric_label = predict_text(text, model, vectorizer)
     except (OSError, ValueError, TypeError) as exc:
         parser.error(str(exc))
 
