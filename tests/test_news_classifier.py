@@ -99,6 +99,28 @@ def test_prediction_rejects_empty_and_oversized_input(tmp_path):
         predict_text("x" * (MAX_PREDICTION_CHARS + 1), model, vectorizer)
 
 
+def test_conflicting_duplicate_articles_are_removed_before_split(tmp_path):
+    fake_path = tmp_path / "Fake.csv"
+    real_path = tmp_path / "True.csv"
+    pd.DataFrame({"text": [
+        "duplicate story text",
+        "fabricated unique article alpha",
+        "fabricated unique article beta",
+    ]}).to_csv(fake_path, index=False)
+    pd.DataFrame({"text": [
+        "duplicate story text",
+        "verified unique article alpha",
+        "verified unique article beta",
+    ]}).to_csv(real_path, index=False)
+
+    texts, labels = load_training_data(fake_path, real_path)
+
+    assert len(texts) == 4
+    assert labels.count(1) == 2
+    assert labels.count(0) == 2
+    assert all("duplicate story" not in text for text in texts)
+
+
 def test_missing_dataset_column_is_reported(tmp_path):
     fake_path = tmp_path / "Fake.csv"
     real_path = tmp_path / "True.csv"
