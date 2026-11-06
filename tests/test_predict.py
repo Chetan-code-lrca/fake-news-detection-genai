@@ -6,6 +6,9 @@ from predict import load_artifacts, predict_news
 
 
 class FakeVectorizer:
+    def __init__(self):
+        self.received = None
+
     def transform(self, texts):
         self.received = texts
         return texts
@@ -22,6 +25,12 @@ class FakeModel:
 def test_predict_news_returns_dataset_label():
     assert predict_news("A verified report for readers.", FakeModel(0), FakeVectorizer()) == "Real"
     assert predict_news("A fabricated report for readers.", FakeModel(1), FakeVectorizer()) == "Fake"
+
+
+def test_legacy_preprocessor_matches_saved_artifact_training():
+    vectorizer = FakeVectorizer()
+    predict_news("State-of-the-art, 2026!", FakeModel(1), vectorizer)
+    assert vectorizer.received == ["stateoftheart "]
 
 
 def test_predict_news_rejects_empty_or_oversized_input():
