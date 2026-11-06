@@ -14,12 +14,14 @@ from news_classifier import (
     predict_text,
 )
 
+DEFAULT_MODEL_DIR = Path(__file__).resolve().parent / "models"
+
 
 def load_artifacts(
     model_path: str | Path | None = None,
     vectorizer_path: str | Path | None = None,
     *,
-    model_dir: str | Path = "models",
+    model_dir: str | Path = DEFAULT_MODEL_DIR,
 ) -> tuple[Any, Any]:
     """Load model artifacts from a directory or explicit legacy file paths.
 
@@ -64,7 +66,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--model-dir",
-        default="models",
+        type=Path,
+        default=DEFAULT_MODEL_DIR,
         help="directory containing fake_news_model.pkl and tfidf_vectorizer.pkl",
     )
     parser.add_argument("--model", type=Path, help="explicit path to a trusted model file")
