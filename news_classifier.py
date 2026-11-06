@@ -24,7 +24,7 @@ def clean_text(text: str) -> str:
     """Apply the simple English-text normalization used by the original notebook."""
     if not isinstance(text, str):
         raise TypeError("News text must be a string.")
-    return re.sub(r"[^a-z\s]", " ", text.lower()).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z\s]", " ", text.lower())).strip()
 
 
 def _read_labeled_csv(path: str | Path, label: int) -> pd.DataFrame:
