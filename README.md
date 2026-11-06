@@ -103,6 +103,14 @@ python predict.py "A news article headline and body to classify."
 
 The input limit is 20,000 characters. The output is the predicted dataset label, not a probability or a verified truth judgment.
 
+The CLI also supports the repository's existing checked-in artifacts or alternate trusted paths:
+
+```bash
+python predict.py "Article text" --model models/fake_news_model.pkl --vectorizer models/tfidf_vectorizer.pkl
+```
+
+This preserves the earlier offline-inference workflow. Do not load joblib/pickle files from untrusted sources.
+
 ## Use from Python
 
 ```python
