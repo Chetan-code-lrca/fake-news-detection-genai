@@ -140,7 +140,7 @@ GitHub Actions runs the unit tests and Python syntax checks on pushes and pull r
 
 Read [DATA_PROVENANCE.md](DATA_PROVENANCE.md) before reusing the included CSVs or model artifacts, especially in an organization or commercial product. The upstream sources and redistribution permissions are not fully recorded in this repository. Do not assume that public availability grants redistribution or commercial-use rights.
 
-The original notebook is retained as an exploration record. Its earlier workflow fitted TF-IDF on the full dataset before creating the train/test split, which can leak test-set vocabulary information into training. Use `python train.py` for new experiments; the reusable pipeline fits the vectorizer on training data only.
+The notebook is retained as a guided walkthrough and now creates the stratified train/test split before fitting TF-IDF. The reusable `python train.py` pipeline also fits the vectorizer on training data only and adds deduplication, artifact metadata, and bounded offline prediction.
 
 ## Limitations and responsible use
 
