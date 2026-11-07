@@ -1,167 +1,154 @@
-# Fake News Detection using AI & GenAI
+# News Text Classification Baseline
 
-This repository contains a machine-learning workflow for classifying news articles as fake or real. The current project focuses on dataset loading, text preprocessing, TF-IDF features, and a trained scikit-learn classifier.
+A reproducible TF-IDF + Logistic Regression baseline for classifying news articles using the labels in the repository's `Fake.csv` and `True.csv` datasets.
 
-## What is included
+> **This is not a fact-checking system or a GenAI application.** It does not verify claims against primary sources, query trusted news outlets, use retrieval, or call an LLM. It predicts patterns learned from historical dataset labels.
 
-- Raw datasets in `data/raw/`
-- A trained classifier in `models/fake_news_model.pkl`
-- The fitted TF-IDF vectorizer in `models/tfidf_vectorizer.pkl`
-- A Jupyter notebook for loading and exploring the data in `notebooks/01_data_loading.ipynb`
+## What works
 
-There is currently no web application or standalone inference script in the repository. The main workflow is the notebook and the included model artifacts.
+- Loads the two labeled CSV files and validates their required `text` column.
+- Normalizes English text and removes blank records.
+- Removes exact duplicate articles and drops text that appears with conflicting labels before splitting.
+- Uses a stratified train/test split.
+- Fits TF-IDF vocabulary on the training split only; test text is transformed with that fitted vocabulary.
+- Trains Logistic Regression and reports accuracy, per-class precision/recall/F1, and a confusion matrix.
+- Saves the classifier, vectorizer, and a JSON training manifest containing dataset SHA-256 hashes and the scikit-learn version.
+- Provides a bounded local prediction CLI and a Python API.
 
-## Project structure
+## Repository layout
 
 ```text
 fake-news-detection-genai/
-├── data/
-│   └── raw/
-│       ├── Fake.csv
-│       ├── True.csv
-│       └── IFND.csv
-├── models/
-│   ├── fake_news_model.pkl
-│   └── tfidf_vectorizer.pkl
+├── data/raw/                 # Existing datasets; see DATA_PROVENANCE.md
+├── models/                   # Existing model/vectorizer artifacts
 ├── notebooks/
-│   └── 01_data_loading.ipynb
-└── README.md
+│   └── 01_data_loading.ipynb # Original exploratory notebook
+├── news_classifier.py        # Reusable loading, training, and inference code
+├── train.py                  # Training/evaluation CLI
+├── predict.py                # Single-text prediction CLI
+├── tests/
+│   └── test_news_classifier.py
+├── requirements.txt
+└── .github/workflows/ci.yml
 ```
 
-## Requirements
+## Requirements and setup
 
-Use Python 3.10 or newer with:
+Python 3.10 or newer is recommended.
 
-- pandas
-- NumPy
-- scikit-learn
-- matplotlib
-- Jupyter Notebook or JupyterLab
-
-The repository does not include a dependency lock file, so using a virtual environment keeps the setup isolated from other Python projects.
-
-## Run locally
-
-Clone the repository:
+Linux / macOS:
 
 ```bash
 git clone https://github.com/Chetan-code-lrca/fake-news-detection-genai.git
 cd fake-news-detection-genai
-```
-
-Create and activate a virtual environment.
-
-### Linux / macOS
-
-```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
+git clone https://github.com/Chetan-code-lrca/fake-news-detection-genai.git
+cd fake-news-detection-genai
 py -m venv .venv
 .venv\Scripts\Activate.ps1
-```
-
-Install the dependencies:
-
-```bash
 python -m pip install --upgrade pip
-python -m pip install pandas numpy scikit-learn matplotlib jupyter
+python -m pip install -r requirements.txt
 ```
 
-Start Jupyter:
+## Train and evaluate
+
+From the repository root:
 
 ```bash
-jupyter notebook
+python train.py
 ```
 
-or:
+The default inputs are:
+
+- `data/raw/Fake.csv` → label `1` (Fake)
+- `data/raw/True.csv` → label `0` (Real)
+
+The default output directory is `models/`. To use different files or settings:
 
 ```bash
-jupyter lab
+python train.py \
+  --fake data/raw/Fake.csv \
+  --real data/raw/True.csv \
+  --output-dir models \
+  --test-size 0.2 \
+  --random-state 42
 ```
 
-Open `notebooks/01_data_loading.ipynb` and run the cells in order.
-
-## Data
-
-The repository contains three CSV files under `data/raw/`:
+Training writes:
 
 ```text
-data/raw/Fake.csv
-data/raw/True.csv
-data/raw/IFND.csv
+models/
+├── fake_news_model.pkl
+├── tfidf_vectorizer.pkl
+└── training_metadata.json
 ```
 
-The notebook currently combines `Fake.csv` and `True.csv`, shuffles the combined data with `random_state=42`, and assigns the labels:
+The metadata file records the split parameters, train/test record counts, evaluation metrics, library version, and SHA-256 hashes of the two CSV inputs. Re-running training replaces the corresponding model artifacts.
 
-```text
-Fake.csv → 1
-True.csv → 0
+## Predict from the command line
+
+After training:
+
+```bash
+python predict.py "A news article headline and body to classify."
 ```
 
-The notebook reads both datasets with the columns `title`, `text`, `subject`, and `date`.
+The input limit is 20,000 characters. The output is the predicted dataset label, not a probability or a verified truth judgment.
 
-## Model artifacts
+The CLI also supports the repository's existing checked-in artifacts or alternate trusted paths:
 
-The trained model and fitted vectorizer are stored here:
-
-```text
-models/fake_news_model.pkl
-models/tfidf_vectorizer.pkl
+```bash
+python predict.py "Article text" --model models/fake_news_model.pkl --vectorizer models/tfidf_vectorizer.pkl
 ```
 
-The expected prediction flow is:
+This preserves the earlier offline-inference workflow. Do not load joblib/pickle files from untrusted sources.
 
-```text
-News text
-   ↓
-TF-IDF vectorizer
-   ↓
-Trained classifier
-   ↓
-0 = real
-1 = fake
-```
-
-Use the included vectorizer when preparing text for the saved classifier. Do not fit a new vectorizer on prediction text, because the resulting feature space would not match the model used during training.
-
-### Load the saved artifacts
+## Use from Python
 
 ```python
-import pickle
+from news_classifier import load_artifacts, predict_text
 
-with open("models/fake_news_model.pkl", "rb") as f:
-    model = pickle.load(f)
-
-with open("models/tfidf_vectorizer.pkl", "rb") as f:
-    vectorizer = pickle.load(f)
+model, vectorizer = load_artifacts("models")
+label, numeric_label = predict_text(
+    "A news article headline and body to classify.",
+    model,
+    vectorizer,
+)
+print(label, numeric_label)
 ```
 
-For a simple prediction:
+Only load joblib/pickle artifacts from sources you trust. Deserializing an untrusted model file can execute code.
 
-```python
-text = "Example news article text"
-features = vectorizer.transform([text])
-prediction = model.predict(features)[0]
+## Tests
 
-print("Fake" if prediction == 1 else "Real")
+```bash
+python -m pip install -r requirements.txt
+python -m pytest -q
 ```
 
-## Reproducing the workflow
+GitHub Actions runs the unit tests and Python syntax checks on pushes and pull requests. Tests use small synthetic CSVs; they do not require downloading or retraining on the full dataset.
 
-1. Clone the repository.
-2. Create and activate the virtual environment.
-3. Install the Python dependencies.
-4. Open `notebooks/01_data_loading.ipynb`.
-5. Run the notebook from the repository's `notebooks/` directory so the relative dataset paths resolve correctly.
-6. Follow the notebook's preprocessing and dataset preparation steps before training a new model.
+## Dataset and model provenance
 
-## Limitations
+Read [DATA_PROVENANCE.md](DATA_PROVENANCE.md) before reusing the included CSVs or model artifacts, especially in an organization or commercial product. The upstream sources and redistribution permissions are not fully recorded in this repository. Do not assume that public availability grants redistribution or commercial-use rights.
 
-This is a machine-learning classification project, not a fact-checking service. A prediction can be wrong because of dataset bias, changes in news sources and writing styles, missing context, or content that differs from the training data.
+The notebook is retained as a guided walkthrough and now creates the stratified train/test split before fitting TF-IDF. The reusable `python train.py` pipeline also fits the vectorizer on training data only and adds deduplication, artifact metadata, and bounded offline prediction.
 
-A `fake` prediction should not be treated as proof that a real-world claim is false, and a `real` prediction should not be treated as proof that a claim is true.
+## Limitations and responsible use
+
+- The labels reflect the source datasets, not independently verified ground truth.
+- The data is historical and may contain source, topic, time-period, and writing-style bias.
+- A random row-level split does not test generalization to future events, new publishers, or unseen source domains. For serious evaluation, add source-aware and time-based holdouts, deduplication against external corpora, and independent expert-reviewed data.
+- The current model is English-oriented and uses word-level TF-IDF. It does not understand context, satire, evolving events, image/video evidence, or the truth of a claim.
+- The current output is a single binary class. It is not calibrated confidence, provenance, or an explanation.
+- Do not use it to moderate speech, rank publishers, suppress reporting, or make consequential decisions without independent verification, bias testing, human review, and a documented appeal process.
+- The repository has no supported HTTP service, authentication layer, monitoring, or production deployment configuration.
+
